@@ -9,7 +9,7 @@ train_search()
 while not train_search(True):
     cnt += 1
     print("[%s]%d 번째 시도중" % (datetime.now(), cnt))
-    time.sleep(1)
+    # time.sleep(1)
     is_login()
 
 after_reserve()
