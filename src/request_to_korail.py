@@ -15,10 +15,10 @@ User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 # Headless chrome
 import os
 import platform
+import traceback
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchAttributeException
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -36,10 +36,11 @@ for o in browser_options:
 
 options.add_argument('headless')
 options.add_argument('window-size=1920x1080')
-options.add_argument('disable-gpu')
+
 
 if f_platform == 'Windows':
     driver_path = os.path.join(DriverDirPath, 'chromedriver_win_v76.exe')
+    options.add_argument('disable-gpu')
 elif f_platform == 'Linux':
     driver_path = os.path.join(DriverDirPath, 'chromedriver_linux')
 else:
@@ -47,12 +48,6 @@ else:
     send_msg('에러 OS 확인 %s' % f_platform)
     raise OSError
 driver = webdriver.Chrome(driver_path, options=options)
-# s_driver = Chrome(driver_path)
-# response = s_driver.request('POST', 'http://www.letskorail.com/ebizprd/EbizPrdTicketPr21111_i1.do', data=o_param)
-
-# response = s_driver.request('GET', 'http://www.letskorail.com/')
-
-# driver.get('http://www.letskorail.com/')
 
 
 def login():
@@ -61,11 +56,12 @@ def login():
     driver.execute_script('document.form1.txtMember.value = "%s"' % korail_id)
     driver.execute_script('document.form1.txtPwd.value = "%s"' % korail_pw)
     driver.execute_script('Login(2)')
+    send_msg('로그인.')
     return True
 
 
-def train_search(refresh=False):
-    if refresh:
+def train_search():
+    if driver.current_url == 'http://www.letskorail.com/ebizprd/EbizPrdTicketPr21111_i1.do':
         driver.refresh()
     else:
         driver.get('http://www.letskorail.com/')
@@ -81,13 +77,8 @@ def train_search(refresh=False):
         예매 버튼
         //*[@id="res_cont_tab01"]/form/div/fieldset/p/a
         '''
-        # driver.implicitly_wait(1)
-        # go_field = driver.find_elements_by_xpath('//*[@id="txtGoStart"]')[0]
-        # go_field.clear()
-        # go_field.send_keys('서울')
-        # end_field = driver.find_elements_by_xpath('//*[@id="txtGoEnd"]')[0]
-        # end_field.clear()
-        # end_field.send_keys('동대구')
+        driver.implicitly_wait(0)
+
         driver.execute_script('document.form1.txtGoStart.value = "서울"')
         driver.execute_script('document.form1.txtGoEnd.value = "동대구"')
         # 00- ktx 01 - 새마을 02 - 무궁화 03 - ?? 04- 무궁화 05- 무궁화 새마을 06 - ?? 07 - ?? 08 - 새마을
@@ -101,45 +92,33 @@ def train_search(refresh=False):
         WebDriverWait(driver, 2).until(expected_conditions.title_contains('일반승차권'))
 
     ## Check
+    reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
+    for a in reserve_table_body.find_elements_by_tag_name('a'):
+        h = a.get_attribute('href')
+        if h and str(h).split(':')[1][:7] == 'infochk' and str(h).split(':')[1][10] == '1':
+            a.click()
+            try:
+                WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
+                alert = driver.switch_to.alert
+                alert.accept()
+            except:
+                print('No alert')
+                send_msg('에러?!\n%s' % traceback.print_exc())
 
-    reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element(by=By.TAG_NAME, value='tbody')
-    for tr in reserve_table_body.find_elements(by=By.TAG_NAME, value='tr'):
-        tds = tr.find_elements(by=By.TAG_NAME, value='td')
-        for td in tds:
-            a_s = td.find_elements(by=By.TAG_NAME, value='a')
-            for a in a_s:
-                h = a.get_attribute('href')
-                if h and str(h).split(':')[1][:7] == 'infochk' and str(h).split(':')[1][10] == '1':
-                    a.click()
-                    try:
-                        WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
-                        alert = driver.switch_to.alert
-                        alert.accept()
-                    except:
-                        print('No alert')
-                    send_msg('빈자리 발견!')
-                    return True
-
+            send_msg('빈자리 발견!')
+            return True
     return False
-
-    # driver.execute_script('quick_reserve()')
-    # driver.execute_script('document.getElementsByName("start")[0].removeAttribute("readonly")')
-    # cal_field = driver.find_elements_by_xpath('//*[@id="selGoStartDay"]')[0]
-    # cal_field.clear()
-    # cal_field.send_keys('2019.09.11')
-    # select = Select(driver.find_element_by_xpath('//*[@id="time"]'))
-    # select.select_by_index(16)
 
 
 def is_login():
     try:
         login_el = driver.find_element_by_xpath('//*[@id="header"]/div[1]/div/ul/li[2]')
         if login_el.get_attribute('class') == 'log_nm':
-            return None
+            return
     except NoSuchAttributeException:
-        return login()
+        send_msg('에러?!\n%s' % traceback.print_exc())
 
-    return login()
+    login()
 
 
 def after_reserve():
@@ -149,12 +128,15 @@ def after_reserve():
         alert.accept()
     except:
         print('No alert')
+        send_msg('에러?!\n%s' % traceback.print_exc())
+
     try:
         WebDriverWait(driver, 10).until(expected_conditions.alert_is_present())
         alert = driver.switch_to.alert
         alert.accept()
     except:
         print('No alert')
+        send_msg('에러?!\n%s' % traceback.print_exc())
 
     try:
         WebDriverWait(driver, 5).until(expected_conditions.title_contains('예약'))
@@ -163,6 +145,7 @@ def after_reserve():
         return True
     except:
         print('에러?')
+        send_msg('에러?!\n%s' % traceback.print_exc())
 
     # return False
 
@@ -175,7 +158,7 @@ def after_reserve():
 #     while not train_search(True):
 #         cnt += 1
 #         print("[%s]%d 번째 시도중" % (datetime.now(), cnt))
-#         time.sleep(1)
+#         # time.sleep(1)
 #         is_login()
 #
 #     after_reserve()
