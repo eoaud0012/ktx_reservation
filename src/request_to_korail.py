@@ -17,6 +17,7 @@ import os
 import platform
 import traceback
 
+import requests
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchAttributeException
 from selenium.webdriver.support import expected_conditions
@@ -116,6 +117,7 @@ def is_login():
         if login_el.get_attribute('class') == 'log_nm':
             return
     except NoSuchAttributeException:
+        capture_current_page()
         send_msg('에러?!\n%s' % traceback.print_exc())
 
     login()
@@ -128,39 +130,55 @@ def after_reserve():
         alert.accept()
     except:
         print('No alert')
+        capture_current_page()
         send_msg('에러?!\n%s' % traceback.print_exc())
 
     try:
         WebDriverWait(driver, 10).until(expected_conditions.alert_is_present())
         alert = driver.switch_to.alert
         alert.accept()
+        capture_current_page()
     except:
         print('No alert')
+        capture_current_page()
         send_msg('에러?!\n%s' % traceback.print_exc())
 
     try:
+        capture_current_page()
         WebDriverWait(driver, 5).until(expected_conditions.title_contains('예약'))
         print('예약 완료.')
         send_msg('예약완료, 결제 ㄱㄱ')
         return True
     except:
         print('에러?')
+        capture_current_page()
         send_msg('에러?!\n%s' % traceback.print_exc())
 
     # return False
 
 
+def capture_current_page():
+    try:
+        driver.save_screenshot('capture.png')
+        file = open('capture.png', 'rb')
+        file_upload(file)
+        file.close()
+    except:
+        send_msg('스크린샷 보내기 실패.')
+
+
 # if __name__ == '__main__':
-#
-#     cnt = 0
-#     login()
-#     train_search()
-#     while not train_search(True):
-#         cnt += 1
-#         print("[%s]%d 번째 시도중" % (datetime.now(), cnt))
-#         # time.sleep(1)
-#         is_login()
-#
-#     after_reserve()
-#
-#     driver.quit()
+
+    # cnt = 0
+    # login()
+    # train_search()
+    # capture_current_page()
+    # while not train_search(True):
+    #     cnt += 1
+    #     print("[%s]%d 번째 시도중" % (datetime.now(), cnt))
+    #     # time.sleep(1)
+    #     is_login()
+    #
+    # after_reserve()
+
+    # driver.quit()
