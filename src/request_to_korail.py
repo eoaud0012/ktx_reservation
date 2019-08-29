@@ -24,6 +24,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.config.keys import korail_id, korail_pw
+from src.config.select_day import my_hour, my_day, my_month
 from src.json_param import browser_options
 from src.send_slacker import *
 
@@ -86,9 +87,9 @@ def train_search():
         driver.execute_script('document.form1.selGoTrain.value = "00"')
 
         driver.execute_script('document.form1.selGoYear.value = 2019')
-        driver.execute_script('document.form1.selGoMonth.value = 09')
-        driver.execute_script('document.form1.selGoDay.value = 11')
-        driver.execute_script('document.form1.selGoHour.value = 18')
+        driver.execute_script('document.form1.selGoMonth.value = %s' % my_month)
+        driver.execute_script('document.form1.selGoDay.value = %s' % my_day)
+        driver.execute_script('document.form1.selGoHour.value = %s' % my_hour)
         driver.execute_script('inqSchedule()')
         WebDriverWait(driver, 2).until(expected_conditions.title_contains('일반승차권'))
 
