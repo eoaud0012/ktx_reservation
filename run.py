@@ -14,8 +14,8 @@ try:
         print("[%s]%d 번째 시도중" % (datetime.now(), cnt))
         time.sleep(random.randint(1, 12) / 10)
         is_login()
-        if cnt % 1000 == 0:
-            capture_current_page()
+        # if cnt % 1000 == 0:
+            # capture_current_page()
 
     after_reserve()
 except:
