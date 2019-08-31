@@ -97,7 +97,7 @@ def train_search():
     reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
     for a in reserve_table_body.find_elements_by_tag_name('a'):
         h = a.get_attribute('href')
-        if h and str(h).split(':')[1][:7] == 'infochk' and str(h).split(':')[1][10] == '1':
+        if h and str(h).split(':')[1][:7] == 'infochk' and str(h).split(':')[1][8] == '1':
             a.click()
             try:
                 WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
