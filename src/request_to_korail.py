@@ -51,6 +51,8 @@ else:
     raise OSError
 driver = webdriver.Chrome(driver_path, options=options)
 
+booking_list = []
+
 
 def login():
     driver.get('http://www.letskorail.com/korail/com/login.do')
@@ -97,18 +99,31 @@ def train_search():
     reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
     for a in reserve_table_body.find_elements_by_tag_name('a'):
         h = a.get_attribute('href')
-        if h and str(h).split(':')[1][:7] == 'infochk' and str(h).split(':')[1][8] == '1':
-            a.click()
-            try:
-                WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
-                alert = driver.switch_to.alert
-                alert.accept()
-            except:
-                print('No alert')
-                send_msg('에러?!\n%s' % traceback.print_exc())
-
-            send_msg('빈자리 발견!')
-            return True
+        if h and str(h).split(':')[1][:7] == 'infochk':
+            if str(h).split(':')[1][8] == '1':
+                a.click()
+                try:
+                    WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
+                    alert = driver.switch_to.alert
+                    alert.accept()
+                except :
+                    print('No alert')
+                    send_msg('에러?!\n%s' % traceback.print_exc())
+                send_msg('빈자리 발견!')
+                after_reserve()
+            elif str(h).split(':')[1][8] == '1':
+                if str(h).split(':')[1][10] in booking_list:
+                    continue
+                a.click()
+                booking_list.append(str(h).split(':')[1][10])
+                try:
+                    WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
+                    alert = driver.switch_to.alert
+                    alert.accept()
+                except:
+                    print('No alert')
+                    send_msg('에러?!\n%s' % traceback.print_exc())
+                send_msg('예약 걸어둠.')
     return False
 
 

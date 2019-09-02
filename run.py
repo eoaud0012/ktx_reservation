@@ -17,7 +17,7 @@ try:
         # if cnt % 1000 == 0:
             # capture_current_page()
 
-    after_reserve()
+    # after_reserve()
 except:
     capture_current_page()
     send_msg("꺼짐 \n %s" % traceback.print_exc())
