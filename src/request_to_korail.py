@@ -24,7 +24,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.config.keys import korail_id, korail_pw
-from src.config.select_day import my_hour, my_day, my_month
+from src.config.select_day import my_hour, my_day, my_month, my_start, my_end
 from src.json_param import browser_options
 from src.send_slacker import *
 
@@ -83,8 +83,8 @@ def train_search():
         '''
         driver.implicitly_wait(0)
 
-        driver.execute_script('document.form1.txtGoStart.value = "서울"')
-        driver.execute_script('document.form1.txtGoEnd.value = "동대구"')
+        driver.execute_script('document.form1.txtGoStart.value = "%s"' % my_start)
+        driver.execute_script('document.form1.txtGoEnd.value = "%s"' % my_end)
         # 00- ktx 01 - 새마을 02 - 무궁화 03 - ?? 04- 무궁화 05- 무궁화 새마을 06 - ?? 07 - ?? 08 - 새마을
         driver.execute_script('document.form1.selGoTrain.value = "00"')
 
@@ -101,6 +101,7 @@ def train_search():
         h = a.get_attribute('href')
         if h and str(h).split(':')[1][:7] == 'infochk':
             if str(h).split(':')[1][8] == '1':
+                print(h)
                 a.click()
                 try:
                     WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
@@ -112,6 +113,7 @@ def train_search():
                 send_msg('빈자리 발견!')
                 after_reserve()
             elif str(h).split(':')[1][8] == '1':
+                print(h)
                 if str(h).split(':')[1][10] in booking_list:
                     continue
                 a.click()
