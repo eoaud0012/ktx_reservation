@@ -19,7 +19,7 @@ import traceback
 
 import requests
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchAttributeException
+from selenium.common.exceptions import NoSuchAttributeException, NoSuchElementException
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -96,7 +96,11 @@ def train_search():
         WebDriverWait(driver, 2).until(expected_conditions.title_contains('일반승차권'))
 
     ## Check
-    reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
+    try:
+        reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
+    except NoSuchElementException:
+        send_msg('tableResult NoSuchElementException')
+        return False
     for a in reserve_table_body.find_elements_by_tag_name('a'):
         h = a.get_attribute('href')
         if h and str(h).split(':')[1][:7] == 'infochk':
