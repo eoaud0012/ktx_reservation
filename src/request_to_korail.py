@@ -99,7 +99,7 @@ def train_search():
     try:
         reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
     except NoSuchElementException:
-        send_msg('tableResult NoSuchElementException')
+        # send_msg('tableResult NoSuchElementException')
         return False
     for a in reserve_table_body.find_elements_by_tag_name('a'):
         h = a.get_attribute('href')
