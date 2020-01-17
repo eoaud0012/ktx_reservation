@@ -18,13 +18,15 @@ import platform
 import traceback
 
 import requests
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchAttributeException, NoSuchElementException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.config.keys import korail_id, korail_pw
-from src.config.select_day import my_hour, my_day, my_month, my_start, my_end
+from src.config.select_day import s_hour, s_day, s_month, s_start, s_end, s_page, s_year
 from src.json_param import browser_options
 from src.send_slacker import *
 
@@ -41,7 +43,7 @@ options.add_argument('window-size=1920x1080')
 
 
 if f_platform == 'Windows':
-    driver_path = os.path.join(DriverDirPath, 'chromedriver_win_v76.exe')
+    driver_path = os.path.join(DriverDirPath, 'chromedriver_win_v78.exe')
     options.add_argument('disable-gpu')
 elif f_platform == 'Linux':
     driver_path = os.path.join(DriverDirPath, 'chromedriver_linux')
@@ -83,54 +85,70 @@ def train_search():
         '''
         driver.implicitly_wait(0)
 
-        driver.execute_script('document.form1.txtGoStart.value = "%s"' % my_start)
-        driver.execute_script('document.form1.txtGoEnd.value = "%s"' % my_end)
+        driver.execute_script('document.form1.txtGoStart.value = "%s"' % s_start)
+        driver.execute_script('document.form1.txtGoEnd.value = "%s"' % s_end)
         # 00- ktx 01 - 새마을 02 - 무궁화 03 - ?? 04- 무궁화 05- 무궁화 새마을 06 - ?? 07 - ?? 08 - 새마을
         driver.execute_script('document.form1.selGoTrain.value = "00"')
 
-        driver.execute_script('document.form1.selGoYear.value = 2019')
-        driver.execute_script('document.form1.selGoMonth.value = %s' % my_month)
-        driver.execute_script('document.form1.selGoDay.value = %s' % my_day)
-        driver.execute_script('document.form1.selGoHour.value = %s' % my_hour)
+        driver.execute_script('document.form1.selGoYear.value = 2020')
+        driver.execute_script('document.form1.selGoMonth.value = %s' % s_month)
+        driver.execute_script('document.form1.selGoDay.value = %s' % s_day)
+        driver.execute_script('document.form1.selGoHour.value = %s' % s_hour)
         driver.execute_script('inqSchedule()')
         WebDriverWait(driver, 2).until(expected_conditions.title_contains('일반승차권'))
-
-    ## Check
-    try:
-        reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
-    except NoSuchElementException:
-        # send_msg('tableResult NoSuchElementException')
-        return False
-    for a in reserve_table_body.find_elements_by_tag_name('a'):
-        h = a.get_attribute('href')
-        if h and str(h).split(':')[1][:7] == 'infochk':
-            if str(h).split(':')[1][8] == '1':
-                print(h)
-                a.click()
-                try:
-                    WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
-                    alert = driver.switch_to.alert
-                    alert.accept()
-                except :
-                    print('No alert')
-                    send_msg('에러?!\n%s' % traceback.print_exc())
-                send_msg('빈자리 발견!')
-                after_reserve()
-            elif str(h).split(':')[1][8] == '1':
-                print(h)
-                if str(h).split(':')[1][10] in booking_list:
-                    continue
-                a.click()
-                booking_list.append(str(h).split(':')[1][10])
-                try:
-                    WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
-                    alert = driver.switch_to.alert
-                    alert.accept()
-                except:
-                    print('No alert')
-                    send_msg('에러?!\n%s' % traceback.print_exc())
-                send_msg('예약 걸어둠.')
+    last_time = 0
+    for i in range(s_page):
+        ## Check
+        try:
+            reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
+        except NoSuchElementException:
+            # send_msg('tableResult NoSuchElementException')
+            return False
+        for a in reserve_table_body.find_elements_by_tag_name('a'):
+            h = a.get_attribute('href')
+            if h and str(h).split(':')[1][:7] == 'infochk':
+                # 빈자리 ( 바로 예매 )
+                if str(h).split(':')[1][8] == '1':
+                    print(h)
+                    a.click()
+                    try:
+                        WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
+                        alert = driver.switch_to.alert
+                        alert.accept()
+                    except :
+                        print('No alert')
+                        send_msg('에러?!\n%s' % traceback.print_exc())
+                    send_msg('빈자리 발견!')
+                    after_reserve()
+                # 예약 대기
+                elif str(h).split(':')[1][8] == '1':
+                    print(h)
+                    if str(h).split(':')[1][10] in booking_list:
+                        continue
+                    a.click()
+                    booking_list.append(str(h).split(':')[1][10])
+                    try:
+                        WebDriverWait(driver, 2).until(expected_conditions.alert_is_present())
+                        alert = driver.switch_to.alert
+                        alert.accept()
+                    except:
+                        print('No alert')
+                        send_msg('에러?!\n%s' % traceback.print_exc())
+                    send_msg('예약 걸어둠.')
+        last_time = find_last_time(reserve_table_body.text)
+        if s_page > 1 and last_time != 0:
+            driver.execute_script("btnNextReserve('%s%s%s', '%s00');" % (s_year, s_month, s_day, last_time))
+            WebDriverWait(driver, 2).until(expected_conditions.presence_of_element_located((By.ID, "tableResult")))
     return False
+
+
+def find_last_time(tr: str):
+    res = tr.split('\n')[-4]
+    last_time = ''.join(e for e in str(res) if e.isnumeric())
+    if len(last_time) != 4:
+        print('다음 페이지 찾을수없음. last_time error - %s' % res)
+        return 0
+    return last_time
 
 
 def is_login():
