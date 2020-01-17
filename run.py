@@ -1,9 +1,8 @@
-import random
-import time
+
 import traceback
 from datetime import datetime
 
-from src.request_to_korail import login, train_search, is_login, after_reserve, driver, capture_current_page
+from src.request_to_korail import login, train_search, is_login, driver, capture_current_page
 from src.send_slacker import send_msg
 
 cnt = 0

@@ -17,8 +17,6 @@ import os
 import platform
 import traceback
 
-import requests
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchAttributeException, NoSuchElementException
 from selenium.webdriver.common.by import By
