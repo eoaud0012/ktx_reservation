@@ -96,6 +96,7 @@ def train_search():
         WebDriverWait(driver, 2).until(expected_conditions.title_contains('일반승차권'))
     last_time = 0
     for i in range(s_page):
+        print('%d PAGE' % (i + 1))
         ## Check
         try:
             reserve_table_body = driver.find_element_by_xpath('//*[@id="tableResult"]').find_element_by_tag_name('tbody')
