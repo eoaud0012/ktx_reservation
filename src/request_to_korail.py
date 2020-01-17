@@ -44,7 +44,7 @@ if f_platform == 'Windows':
     driver_path = os.path.join(DriverDirPath, 'chromedriver_win_v78.exe')
     options.add_argument('disable-gpu')
 elif f_platform == 'Linux':
-    driver_path = os.path.join(DriverDirPath, 'chromedriver_linux')
+    driver_path = os.path.join(DriverDirPath, 'chromedriver_linux_v79')
 else:
     print('에러 OS 확인 %s' % f_platform)
     send_msg('에러 OS 확인 %s' % f_platform)
