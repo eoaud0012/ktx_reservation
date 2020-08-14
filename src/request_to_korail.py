@@ -36,13 +36,13 @@ options = webdriver.ChromeOptions()
 for o in browser_options:
     options.add_argument(o)
 
-options.add_argument('headless')
-options.add_argument('window-size=1920x1080')
+# options.add_argument('headless')
+# options.add_argument('window-size=1920x1080')
 
 
 if f_platform == 'Windows':
     driver_path = os.path.join(DriverDirPath, 'chromedriver_win_v78.exe')
-    options.add_argument('disable-gpu')
+    # options.add_argument('disable-gpu')
 elif f_platform == 'Linux':
     driver_path = os.path.join(DriverDirPath, 'chromedriver_linux_v79')
 else:
