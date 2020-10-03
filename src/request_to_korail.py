@@ -68,7 +68,7 @@ def train_search():
     if driver.current_url == 'http://www.letskorail.com/ebizprd/EbizPrdTicketPr21111_i1.do':
         driver.refresh()
     else:
-        driver.get('http://www.letskorail.com/')
+        driver.get('http://www.letskorail.com/ebizprd/prdMain.do')
         '''
         출발역
         //*[@id="txtGoStart"]
